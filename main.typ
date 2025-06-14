@@ -33,6 +33,89 @@ by applying union, concatenation, and Kleene star.
 - Example: $a^*(c|d)b^*$ denotes the *regular set* ${a}^*({c}union{d}){b}^*$
 - The regular expression of a set is not unique
 
+== Limitations of regular languages
+- Can only read left to right
+- Finite and bounded memory
+- Can only keep track of bounded history
+
+== Proving that a language is not regular
+\
+*Example 1: $L_1 = {a^n b^n | n >= 1}$*\
+A proof that $L_1$ is not regular:
+- If $L_1$ is regular, it would be accepted by a *DFSM* $M$
+- Machine M has a finite number of states, $k$
+- Consider the action of $M$ on input $a^n b^n$, with $n >> k:$\
+// "Trust me bro typst is so much nicer than Latex" 
+#align(center)[#text(blue)[[q0]] #math.underbrace($a a a a a a a a a$, $n$) #math.underbrace($b b b b b b b b b$, $n$) #text(blue)[[$q_f$]]]
+
+- By the pigeonhole principle (those who know), there is a state $q_i$ that is visited more than once in processing the sequence of $a$'s:
+#align(center)[#text(blue)[[$q_0$]] #math.overbrace($a a a a$ +text(blue)[[$q_i$]] + $a a$ + text(blue)[[$q_i$]] + $a a$, $n$) #math.overbrace($b b b b b b b b b$, $n$) #text(blue)[[$q_f$]]]
+
+- Let's split $a^n b^n$ into three pieces $(u,v,w)$ according to $q_i$:
+
+#align(center)[
+  #text(blue)[[$q_0$]]
+  #math.underbrace($a a a a$, $u$) #text(blue)[[$q_i$]] #math.underbrace($a a$, $v$) #text(blue)[[$q_i$]]#math.underbrace($a a b b b b b b b b b$, $w$) #text(blue)[[$q_f$]
+  ]
+]
+
+#align(center)[We have: #math.underbrace($accent(delta, "^")(q_0, u)=q_i$, $-->$), #math.underbrace($accent(delta, "^")(q_i, v)=q_i$, $arrow.ccw$), and #math.underbrace($accent(delta, "^")(q_i, w)=q_f in F$, $-->$).]
+
+What does $arrow.ccw$ mean?
+- We could erase $v$ and the obtained string would be accepted!
+
+#align(center)[
+  #text(blue)[[$q_0$]] #math.underbrace($a a a a$, $u$) #text(blue)[[$q_i$]] #math.underbrace($a a b b b b b b b b b$, $w$) #text(blue)[[$q_f$]]
+  ]
+#align(center)[This is wrong: $u w = a^(n-j)b^n in L(M)$ but $u w in.not L_1$]
+- We could even insert extra copies of $v$ and the resulting string would also be accepted.
+
+*Example 2: $L_2 = { a^(2^n) | n > 0}$*
+
+- A DFSM $M$ with $k$ states, with $L(M) = L_2$ and start state $q_0$
+- Let $n >> k$ and consider the action of $M$ on scanning string $a^(2^n)$
+- By pigeonhole principle, $M$ must repeat a state $q$ while scanning the first $n$ symbols of $a^(2^n)$
+- Now let $i,j,m$ be such that $2^n=i+j+m$, with $0 < j <= n$ and
+#align(center)[
+  $accent(delta, "^")(q_0, a^i)=q, accent(delta, "^")(q, a^j) = q, accent(delta, "^")(q, a^m) = q_f in F$
+]
+- Alternatively:
+#align(center)[
+  #text(blue)[[$q_0$]] 
+  #math.overbrace(
+    math.underbrace($a a a a a a a a a a$, $i$) +
+    math.underbrace($a a a a a$, $j$) + math.underbrace($a a a a a a a a a a a a a a a a$, $m$), $2^n$
+  )
+  #text(blue)[[$q_f$]]
+]
+
+- Now given $accent(delta, "^")(p, a^j) = p$, we could insert an extra $a^j$, to get $a^(2^n + j)$, and the resulting string would be erroneously accepted:
+
+#align(center)[
+  #text(blue)[[$q_0$]]
+  #math.underbrace($a a a a a a a a a a$, $i$)
+  #text(blue)[[$q$]]
+  #math.underbrace($a a a a a$, $j$)
+  #text(blue)[[$q$]]
+  #math.underbrace($a a a a a$, $j$)
+  #text(blue)[[$q$]]
+  #math.underbrace($a a a a a a a a a a a a a a a a$, $m$)
+  #text(blue)[[$q_f$]]
+]
+
+#align(center)[Indeed, we can derive $accent(delta, "^")(q_0, a^(2^n + j)) = q_f in F$]
+
+- But this is wrong, because $2^n + j$ is not a power of 2:
+
+#align(center)[
+  $2^n + j <= 2^n + n$\
+  $2^n + j < 2^n + 2^n$\
+  $= 2^(n +1)$\
+  $2^(n+1)$ is the next power of $2$ greater than $2^n$
+]
+
+Apparently this is a contradiction.
+
 == Regular Expressions
 Regular Expression Identities : \
 - $emptyset u = u emptyset = emptyset$
@@ -116,7 +199,7 @@ $delta(q_n, epsilon):$ Set of states reachable from $q_n$ without reading input:
 == FSM to regular expression
 == FSM minimization
 == Pumping lemma for regular languages
-== Regular expression identities
+Dumbass lemma. You have a sufficiently long string, find a substring which you can pump (repeat an arbitrary amount of times),bam you've proven a language is not regular.
 == Regular grammars
 A grammar $(V, Sigma, P, S)$ is *regular* if every production rule in $P$ has one of the following forms $(a in Sigma$ and $A, B in V)$:
 - $A -> a B$ or
@@ -139,6 +222,20 @@ Therefore:
 - However, generating and generated symbols may not be useful
 
 == Closure properties
+
+- _Union_, _concatenation_, _Kleene Star_:\ Immediate by considering regular expressions
+- _Complement_:\Obtain a DFSA $M$ of the given language, and define another DFSA $M'$ in which the accepting states of $M$ become non-accepting states of $M'$, and vice versa
+- _Intersection_: Two possibilities:\
+
+TODO: Fix this (typst moment)
++ Use the law $L_1 inter L_2 = #overline[#overline[$L_1$] $union$ #overline[$L_2$]]$ (and reduce the cases above)
++ Define a construction that runs two DFSAs in "parallel"\
+Given $M_i = (Q_i, Sigma, delta_i, q_i, F_i)$ (with $i in {1,2}$), define $M=(Q_1 times Q_2, Sigma, delta, (q_1,q_2), F_1 times F_2)$, where $delta((p,q),a) = (delta_1(p,a),delta_2(q,a))$.
+
+- _Reversal_: Given a machine $M$ and create a machine $M^R$ by:
+ - convert $M$ to normal form
+ - reverse all arcs in the state diagram
+ - swap the starting and the accepting states
 
 = Context-free languages
 == Definitions
